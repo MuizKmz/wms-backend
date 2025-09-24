@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,21 +10,416 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Material {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique
-  name      String
-  uom       String?
-  qty       Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// --- Enums ---
+enum WorkOrderStatus {
+  Planned
+  InProgress @map("In Progress")
+  Completed
+  Cancelled
 }
 
+enum CompoundingStatus {
+  Draft
+  Prepared
+  QCVerified @map("QC Verified")
+  QAApproved @map("QA Approved")
+}
+
+enum ProductionBatchStatus {
+  InProgress @map("In Progress")
+  Paused
+  Completed
+}
+
+enum AssetStatus {
+  Available
+  InUse @map("In Use")
+  Down
+  Maintenance
+}
+
+enum QcType {
+  IPQC
+  OQC
+}
+
+enum QcResult {
+  Pass
+  Fail
+}
+
+enum DispositionStatus {
+  Rework
+  Scrap
+}
+
+// --- Core & Master Data ---
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement()) @map("user_id")
+  username     String   @unique @db.VarChar(50)
+  fullName     String   @map("full_name") @db.VarChar(100)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  roleId       Int      @map("role_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role                    Role                     @relation(fields: [roleId], references: [id])
+  workOrdersPlanned       WorkOrder[]              @relation("WorkOrderPlanner")
+  compoundingChemist      CompoundingOrder[]       @relation("CompoundingChemist")
+  compoundingQC           CompoundingOrder[]       @relation("CompoundingQC")
+  compoundingQA           CompoundingOrder[]       @relation("CompoundingQA")
+  productionRecords       ProductionRecord[]
+  downtimeEventsReported  DowntimeEvent[]
+  qcRecords               QcRecord[]
+  packingRecords          PackingRecord[]
+
+  @@map("users")
+}
+
+model Role {
+  id       Int    @id @default(autoincrement()) @map("role_id")
+  roleName String @unique @map("role_name") @db.VarChar(50)
+
+  // Relations
+  users User[]
+
+  @@map("roles")
+}
+
+model Product {
+  id          Int    @id @default(autoincrement()) @map("product_id")
+  productCode String @unique @map("product_code") @db.VarChar(50)
+  productName String @map("product_name") @db.VarChar(255)
+
+  // Relations
+  boms       Bom[]
+  workOrders WorkOrder[]
+
+  @@map("products")
+}
+
+model Bom {
+  id        Int     @id @default(autoincrement()) @map("bom_id")
+  productId Int     @map("product_id")
+  revision  String  @db.VarChar(20)
+  isDefault Boolean @default(false) @map("is_default")
+
+  // Relations
+  product    Product    @relation(fields: [productId], references: [id])
+  bomItems   BomItem[]
+  workOrders WorkOrder[]
+
+  @@unique([productId, revision])
+  @@map("boms")
+}
+
+model BomItem {
+  id            Int     @id @default(autoincrement()) @map("bom_item_id")
+  bomId         Int     @map("bom_id")
+  materialId    Int     @map("material_id")
+  quantity      Decimal @db.Decimal(10, 4)
+  unitOfMeasure String  @map("unit_of_measure") @db.VarChar(20)
+
+  // Relations
+  bom      Bom      @relation(fields: [bomId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+
+  @@map("bom_items")
+}
+
+model Material {
+  id           Int    @id @default(autoincrement()) @map("material_id")
+  materialCode String @unique @map("material_code") @db.VarChar(50)
+  materialName String @map("material_name") @db.VarChar(255)
+  supplierId   Int?   @map("supplier_id")
+  specs        Json?
+
+  // Relations
+  supplier                   Supplier?                   @relation(fields: [supplierId], references: [id])
+  bomItems                   BomItem[]
+  materialBatches            MaterialBatch[]
+  compoundingMaterialLines   CompoundingMaterialLine[]
+
+  @@map("materials")
+}
+
+model MaterialBatch {
+  id            Int       @id @default(autoincrement()) @map("batch_id")
+  materialId    Int       @map("material_id")
+  batchNo       String    @unique @map("batch_no") @db.VarChar(50)
+  qtyReceived   Decimal   @map("qty_received") @db.Decimal(10, 4)
+  qtyAvailable  Decimal   @map("qty_available") @db.Decimal(10, 4)
+  receivedDate  DateTime  @map("received_date") @db.Date
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+
+  // Relations
+  material                      Material                     @relation(fields: [materialId], references: [id])
+  compoundingMaterialLines      CompoundingMaterialLine[]
+  productionMaterialConsumption ProductionMaterialConsumption[]
+
+  @@map("material_batches")
+}
+
+model Supplier {
+  id           Int    @id @default(autoincrement()) @map("supplier_id")
+  supplierName String @map("supplier_name") @db.VarChar(100)
+
+  // Relations
+  materials Material[]
+
+  @@map("suppliers")
+}
+
+// --- Planning & Orders ---
+model WorkOrder {
+  id           Int             @id @default(autoincrement()) @map("work_order_id")
+  workOrderNo  String          @unique @map("work_order_no") @db.VarChar(50)
+  productId    Int             @map("product_id")
+  bomId        Int             @map("bom_id")
+  qtyPlanned   Int             @map("qty_planned")
+  startDate    DateTime        @map("start_date") @db.Date
+  endDate      DateTime        @map("end_date") @db.Date
+  plannerId    Int             @map("planner_id")
+  status       WorkOrderStatus
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime?       @updatedAt @map("updated_at")
+
+  // Relations
+  product           Product            @relation(fields: [productId], references: [id])
+  bom               Bom                @relation(fields: [bomId], references: [id])
+  planner           User               @relation("WorkOrderPlanner", fields: [plannerId], references: [id])
+  compoundingOrder  CompoundingOrder?
+  productionBatches ProductionBatch[]
+
+  @@map("work_orders")
+}
+
+model CompoundingOrder {
+  id           Int               @id @default(autoincrement()) @map("compounding_id")
+  workOrderId  Int               @unique @map("work_order_id")
+  chemistId    Int?              @map("chemist_id")
+  qcId         Int?              @map("qc_id")
+  qaId         Int?              @map("qa_id")
+  status       CompoundingStatus
+
+  // Relations
+  workOrder       WorkOrder                 @relation(fields: [workOrderId], references: [id])
+  chemist         User?                     @relation("CompoundingChemist", fields: [chemistId], references: [id])
+  qcUser          User?                     @relation("CompoundingQC", fields: [qcId], references: [id])
+  qaUser          User?                     @relation("CompoundingQA", fields: [qaId], references: [id])
+  materialLines   CompoundingMaterialLine[]
+
+  @@map("compounding_orders")
+}
+
+model CompoundingMaterialLine {
+  id               Int     @id @default(autoincrement()) @map("line_id")
+  compoundingId    Int     @map("compounding_id")
+  materialId       Int     @map("material_id")
+  requiredQty      Decimal @map("required_qty") @db.Decimal(10, 4)
+  actualQty        Decimal? @map("actual_qty") @db.Decimal(10, 4)
+  materialBatchId  Int?    @map("material_batch_id")
+
+  // Relations
+  compoundingOrder CompoundingOrder @relation(fields: [compoundingId], references: [id])
+  material         Material         @relation(fields: [materialId], references: [id])
+  materialBatch    MaterialBatch?   @relation(fields: [materialBatchId], references: [id])
+
+  @@map("compounding_material_lines")
+}
+
+// --- Production & WIP ---
+model ProductionBatch {
+  id            Int                   @id @default(autoincrement()) @map("production_batch_id")
+  workOrderId   Int                   @map("work_order_id")
+  machineId     Int                   @map("machine_id")
+  toolId        Int?                  @map("tool_id")
+  mouldId       Int?                  @map("mould_id")
+  batchNo       String                @unique @map("batch_no") @db.VarChar(50)
+  startTime     DateTime              @map("start_time")
+  endTime       DateTime?             @map("end_time")
+  qtyGood       Int                   @default(0) @map("qty_good")
+  qtyReject     Int                   @default(0) @map("qty_reject")
+  status        ProductionBatchStatus
+
+  // Relations
+  workOrder                 WorkOrder                     @relation(fields: [workOrderId], references: [id])
+  machine                   Machine                       @relation(fields: [machineId], references: [id])
+  tool                      Tool?                         @relation(fields: [toolId], references: [id])
+  mould                     Mould?                        @relation(fields: [mouldId], references: [id])
+  productionRecords         ProductionRecord[]
+  materialConsumption       ProductionMaterialConsumption[]
+  downtimeEvents            DowntimeEvent[]
+  qcRecords                 QcRecord[]
+  rejectScraps              RejectScrap[]
+  packingRecords            PackingRecord[]
+
+  @@map("production_batches")
+}
+
+model ProductionRecord {
+  id                 Int       @id @default(autoincrement()) @map("record_id")
+  productionBatchId  Int       @map("production_batch_id")
+  operatorId         Int       @map("operator_id")
+  taskStart          DateTime  @map("task_start")
+  taskEnd            DateTime? @map("task_end")
+  qtyProcessed       Int?      @map("qty_processed")
+
+  // Relations
+  productionBatch ProductionBatch @relation(fields: [productionBatchId], references: [id])
+  operator        User            @relation(fields: [operatorId], references: [id])
+
+  @@map("production_records")
+}
+
+model ProductionMaterialConsumption {
+  id                Int       @id @default(autoincrement()) @map("consumption_id")
+  productionBatchId Int       @map("production_batch_id")
+  materialBatchId   Int       @map("material_batch_id")
+  qtyConsumed       Decimal   @map("qty_consumed") @db.Decimal(10, 4)
+  consumedAt        DateTime  @default(now()) @map("consumed_at")
+
+  // Relations
+  productionBatch ProductionBatch @relation(fields: [productionBatchId], references: [id])
+  materialBatch   MaterialBatch   @relation(fields: [materialBatchId], references: [id])
+
+  @@map("production_material_consumption")
+}
+
+// --- Assets, Maintenance & Downtime ---
+model Machine {
+  id          Int         @id @default(autoincrement()) @map("machine_id")
+  machineCode String      @unique @map("machine_code") @db.VarChar(50)
+  name        String      @db.VarChar(100)
+  department  String?     @db.VarChar(50)
+  location    String?     @db.VarChar(50)
+  status      AssetStatus
+
+  // Relations
+  productionBatches ProductionBatch[]
+  downtimeEvents    DowntimeEvent[]
+  tools             Tool[]
+  moulds            Mould[]
+
+  @@map("machines")
+}
+
+model Tool {
+  id           Int         @id @default(autoincrement()) @map("tool_id")
+  machineId    Int         @map("machine_id")
+  identifier   String      @unique @db.VarChar(50)
+  code         String      @db.VarChar(100)
+  name         String      @db.VarChar(100)
+  type         String?     @db.VarChar(50)
+  lifeLimit    Int?        @map("life_limit")
+  totalCycles  Int         @default(0) @map("total_cycles")
+  status       AssetStatus
+
+  // Relations
+  machine           Machine           @relation(fields: [machineId], references: [id])
+  productionBatches ProductionBatch[]
+
+  @@map("tools")
+}
+
+model Mould {
+  id           Int         @id @default(autoincrement()) @map("mould_id")
+  machineId    Int         @map("machine_id")
+  identifier   String      @unique @db.VarChar(50)
+  name         String      @db.VarChar(100)
+  code         String      @db.VarChar(100)
+  cavityCount  Int?        @map("cavity_count")
+  lifeLimit    Int?        @map("life_limit")
+  totalCycles  Int         @default(0) @map("total_cycles")
+  type         String?     @db.VarChar(50)
+  status       AssetStatus
+
+  // Relations
+  machine           Machine           @relation(fields: [machineId], references: [id])
+  productionBatches ProductionBatch[]
+
+  @@map("moulds")
+}
+
+model DowntimeEvent {
+  id                 Int       @id @default(autoincrement()) @map("downtime_id")
+  machineId          Int       @map("machine_id")
+  productionBatchId  Int?      @map("production_batch_id")
+  startTime          DateTime  @map("start_time")
+  endTime            DateTime? @map("end_time")
+  category           String?   @db.VarChar(50)
+  cause              String?   @db.VarChar(255)
+  reportedBy         Int       @map("reported_by")
+
+  // Relations
+  machine         Machine          @relation(fields: [machineId], references: [id])
+  productionBatch ProductionBatch? @relation(fields: [productionBatchId], references: [id])
+  reporter        User             @relation(fields: [reportedBy], references: [id])
+
+  @@map("downtime_events")
+}
+
+// --- Quality, Packing & Rejects ---
+model QcRecord {
+  id                 Int       @id @default(autoincrement()) @map("qc_id")
+  productionBatchId  Int       @map("production_batch_id")
+  inspectorId        Int       @map("inspector_id")
+  qcType             QcType    @map("qc_type")
+  checkedAt          DateTime  @map("checked_at")
+  result             QcResult
+  remarks            String?   @db.Text
+
+  // Relations
+  productionBatch  ProductionBatch    @relation(fields: [productionBatchId], references: [id])
+  inspector        User               @relation(fields: [inspectorId], references: [id])
+  testParameters   QcTestParameter[]
+  rejectScraps     RejectScrap[]
+
+  @@map("qc_records")
+}
+
+model QcTestParameter {
+  id            Int      @id @default(autoincrement()) @map("test_id")
+  qcId          Int      @map("qc_id")
+  parameterName String   @map("parameter_name") @db.VarChar(100)
+  expectedValue String?  @map("expected_value") @db.VarChar(100)
+  actualValue   String   @map("actual_value") @db.VarChar(100)
+  status        QcResult
+
+  // Relations
+  qcRecord QcRecord @relation(fields: [qcId], references: [id])
+
+  @@map("qc_test_parameters")
+}
+
+model RejectScrap {
+  id                 Int               @id @default(autoincrement()) @map("reject_id")
+  productionBatchId  Int               @map("production_batch_id")
+  qcId               Int?              @map("qc_id")
+  reason             String            @db.VarChar(255)
+  quantity           Int
+  disposition        DispositionStatus
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  productionBatch ProductionBatch @relation(fields: [productionBatchId], references: [id])
+  qcRecord        QcRecord?       @relation(fields: [qcId], references: [id])
+
+  @@map("reject_scraps")
+}
+
+model PackingRecord {
+  id                 Int      @id @default(autoincrement()) @map("packing_id")
+  productionBatchId  Int      @map("production_batch_id")
+  packedById         Int      @map("packed_by_id")
+  packageType        String?  @map("package_type") @db.VarChar(50)
+  qtyPacked          Int      @map("qty_packed")
+  packedAt           DateTime @default(now()) @map("packed_at")
+
+  // Relations
+  productionBatch ProductionBatch @relation(fields: [productionBatchId], references: [id])
+  packedBy        User            @relation(fields: [packedById], references: [id])
+
+  @@map("packing_records")
 }
