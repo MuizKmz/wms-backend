@@ -73,6 +73,8 @@ model User {
   downtimeEventsReported  DowntimeEvent[]
   qcRecords               QcRecord[]
   packingRecords          PackingRecord[]
+  maintenanceAssigned     Maintenance[]            @relation("AssignedTechnician")
+  maintenancePerformed    Maintenance[]            @relation("PerformedTechnician")
 
   @@map("users")
 }
@@ -301,6 +303,7 @@ model Machine {
   downtimeEvents    DowntimeEvent[]
   tools             Tool[]
   moulds            Mould[]
+  maintenances      Maintenance[]
 
   @@map("machines")
 }
@@ -340,6 +343,26 @@ model Mould {
   productionBatches ProductionBatch[]
 
   @@map("moulds")
+}
+
+model Maintenance {
+  id             Int       @id @default(autoincrement()) @map("maintenance_id")
+  machineId      Int       @map("machine_id")
+  scheduledDate  DateTime  @map("scheduled_date")
+  maintenanceType String   @map("maintenance_type") // Preventive, Corrective, etc.
+  assignedTo     Int       @map("assigned_to") // planned technician
+  status         String    @map("status") // Scheduled, In Progress, Completed, Delayed
+  description    String?   @db.Text
+  remarks        String?   @db.Text
+  performedBy    Int?      @map("performed_by")
+  performedAt    DateTime? @map("performed_at")
+
+  // Relations
+  machine   Machine @relation(fields: [machineId], references: [id])
+  technician User   @relation("AssignedTechnician", fields: [assignedTo], references: [id])
+  performer  User?  @relation("PerformedTechnician", fields: [performedBy], references: [id])
+
+  @@map("maintenance_records")
 }
 
 model DowntimeEvent {
