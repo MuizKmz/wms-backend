@@ -1,565 +1,655 @@
-// import { PrismaClient } from '@prisma/client';
-// const prisma = new PrismaClient();
-
-// async function main() {
-//   // --- Master Data ---
-//   await prisma.role.createMany({
-//     data: [
-//       { roleName: 'Admin' },
-//       { roleName: 'Planner' },
-//       { roleName: 'Chemist' },
-//       { roleName: 'QC' },
-//       { roleName: 'QA' },
-//       { roleName: 'Operator' },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   const [adminRole, plannerRole, chemistRole, qcRole, qaRole, operatorRole] = await Promise.all([
-//     prisma.role.findUnique({ where: { roleName: 'Admin' } }),
-//     prisma.role.findUnique({ where: { roleName: 'Planner' } }),
-//     prisma.role.findUnique({ where: { roleName: 'Chemist' } }),
-//     prisma.role.findUnique({ where: { roleName: 'QC' } }),
-//     prisma.role.findUnique({ where: { roleName: 'QA' } }),
-//     prisma.role.findUnique({ where: { roleName: 'Operator' } }),
-//   ]);
-
-//   await prisma.user.createMany({
-//     data: [
-//       { username: 'admin', fullName: 'System Admin', passwordHash: 'admin123', roleId: adminRole?.id!, isActive: true },
-//       { username: 'planner1', fullName: 'John Planner', passwordHash: 'planner123', roleId: plannerRole?.id!, isActive: true },
-//       { username: 'chemist1', fullName: 'Alice Chemist', passwordHash: 'chemist123', roleId: chemistRole?.id!, isActive: true },
-//       { username: 'qc1', fullName: 'Bob QC', passwordHash: 'qc123', roleId: qcRole?.id!, isActive: true },
-//       { username: 'qa1', fullName: 'Carol QA', passwordHash: 'qa123', roleId: qaRole?.id!, isActive: true },
-//       { username: 'operator1', fullName: 'Dave Operator', passwordHash: 'operator123', roleId: operatorRole?.id!, isActive: true },
-//       { username: 'operator2', fullName: 'Eve Operator', passwordHash: 'operator123', roleId: operatorRole?.id!, isActive: true },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   await prisma.supplier.createMany({
-//     data: [
-//       { supplierName: 'Global Chemicals' },
-//       { supplierName: 'Metals Inc.' },
-//       { supplierName: 'Polymer Solutions' },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [supplier1, supplier2, supplier3] = await Promise.all([
-//     prisma.supplier.findFirst({ where: { supplierName: 'Global Chemicals' } }),
-//     prisma.supplier.findFirst({ where: { supplierName: 'Metals Inc.' } }),
-//     prisma.supplier.findFirst({ where: { supplierName: 'Polymer Solutions' } }),
-//   ]);
-
-//   await prisma.material.createMany({
-//     data: [
-//       { materialCode: 'MAT001', materialName: 'Steel Bar', supplierId: supplier2?.id, specs: { grade: 'A36', length: '6m', temperature: 'ambient' } },
-//       { materialCode: 'MAT002', materialName: 'Aluminium Sheet', supplierId: supplier2?.id, specs: { thickness: '2mm', size: '1x2m', grade: '6061' } },
-//       { materialCode: 'MAT003', materialName: 'Plastic Resin ABS', supplierId: supplier1?.id, specs: { type: 'ABS', color: 'White', mfi: '20' } },
-//       { materialCode: 'MAT004', materialName: 'Plastic Resin PP', supplierId: supplier3?.id, specs: { type: 'PP', color: 'Natural', mfi: '12' } },
-//       { materialCode: 'MAT005', materialName: 'Carbon Black', supplierId: supplier1?.id, specs: { type: 'N330', particle_size: '28nm' } },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [mat1, mat2, mat3, mat4, mat5] = await Promise.all([
-//     prisma.material.findUnique({ where: { materialCode: 'MAT001' } }),
-//     prisma.material.findUnique({ where: { materialCode: 'MAT002' } }),
-//     prisma.material.findUnique({ where: { materialCode: 'MAT003' } }),
-//     prisma.material.findUnique({ where: { materialCode: 'MAT004' } }),
-//     prisma.material.findUnique({ where: { materialCode: 'MAT005' } }),
-//   ]);
-
-//   await prisma.product.createMany({
-//     data: [
-//       { productCode: 'PROD001', productName: 'Widget A' },
-//       { productCode: 'PROD002', productName: 'Gadget B' },
-//       { productCode: 'PROD003', productName: 'Component C' },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [prod1, prod2, prod3] = await Promise.all([
-//     prisma.product.findUnique({ where: { productCode: 'PROD001' } }),
-//     prisma.product.findUnique({ where: { productCode: 'PROD002' } }),
-//     prisma.product.findUnique({ where: { productCode: 'PROD003' } }),
-//   ]);
-
-//   await prisma.machine.createMany({
-//     data: [
-//       { machineCode: 'MC001', name: 'Injection Molder #1', department: 'Molding', status: 'Available', location: 'Plant 1 - Section A' },
-//       { machineCode: 'MC002', name: 'Press Machine #1', department: 'Stamping', status: 'Available', location: 'Plant 1 - Section B' },
-//       { machineCode: 'MC003', name: 'Injection Molder #2', department: 'Molding', status: 'Available', location: 'Plant 1 - Section A' },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [machine1, machine2, machine3] = await Promise.all([
-//     prisma.machine.findUnique({ where: { machineCode: 'MC001' } }),
-//     prisma.machine.findUnique({ where: { machineCode: 'MC002' } }),
-//     prisma.machine.findUnique({ where: { machineCode: 'MC003' } }),
-//   ]);
-
-//   // Create Tools
-//   await prisma.tool.createMany({
-//     data: [
-//       { machineId: machine1?.id!, identifier: 'TOOL001', code: 'T-001', name: 'Injection Tool A', type: 'Injection', lifeLimit: 100000, totalCycles: 0, status: 'Available' },
-//       { machineId: machine2?.id!, identifier: 'TOOL002', code: 'T-002', name: 'Press Tool B', type: 'Press', lifeLimit: 50000, totalCycles: 0, status: 'Available' },
-//       { machineId: machine3?.id!, identifier: 'TOOL003', code: 'T-003', name: 'Injection Tool C', type: 'Injection', lifeLimit: 80000, totalCycles: 0, status: 'Available' },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // Create Moulds
-//   await prisma.mould.createMany({
-//     data: [
-//       { machineId: machine1?.id!, identifier: 'MOULD001', code: 'M-001', name: 'Widget A Mould', type: 'Injection', cavityCount: 2, lifeLimit: 500000, totalCycles: 0, status: 'Available' },
-//       { machineId: machine2?.id!, identifier: 'MOULD002', code: 'M-002', name: 'Gadget B Die', type: 'Stamping', cavityCount: 1, lifeLimit: 200000, totalCycles: 0, status: 'Available' },
-//       { machineId: machine3?.id!, identifier: 'MOULD003', code: 'M-003', name: 'Component C Mould', type: 'Injection', cavityCount: 4, lifeLimit: 300000, totalCycles: 0, status: 'Available' },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   const [tool1, tool2, tool3] = await Promise.all([
-//     prisma.tool.findUnique({ where: { identifier: 'TOOL001' } }),
-//     prisma.tool.findUnique({ where: { identifier: 'TOOL002' } }),
-//     prisma.tool.findUnique({ where: { identifier: 'TOOL003' } }),
-//   ]);
-
-//   const [mould1, mould2, mould3] = await Promise.all([
-//     prisma.mould.findUnique({ where: { identifier: 'MOULD001' } }),
-//     prisma.mould.findUnique({ where: { identifier: 'MOULD002' } }),
-//     prisma.mould.findUnique({ where: { identifier: 'MOULD003' } }),
-//   ]);
-
-//   // --- Transactional Data ---
-//   // BOM
-//   await prisma.bom.createMany({
-//     data: [
-//       { productId: prod1?.id!, revision: 'A', isDefault: true },
-//       { productId: prod2?.id!, revision: 'A', isDefault: true },
-//       { productId: prod3?.id!, revision: 'A', isDefault: true },
-//       { productId: prod1?.id!, revision: 'B', isDefault: false },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [bom1, bom2, bom3, bom1B] = await Promise.all([
-//     prisma.bom.findFirst({ where: { productId: prod1?.id!, revision: 'A' } }),
-//     prisma.bom.findFirst({ where: { productId: prod2?.id!, revision: 'A' } }),
-//     prisma.bom.findFirst({ where: { productId: prod3?.id!, revision: 'A' } }),
-//     prisma.bom.findFirst({ where: { productId: prod1?.id!, revision: 'B' } }),
-//   ]);
-
-//   await prisma.bomItem.createMany({
-//     data: [
-//       // BOM for Widget A (Rev A)
-//       { bomId: bom1?.id!, materialId: mat1?.id!, quantity: 10.5, unitOfMeasure: 'kg' },
-//       { bomId: bom1?.id!, materialId: mat3?.id!, quantity: 5.2, unitOfMeasure: 'kg' },
-//       { bomId: bom1?.id!, materialId: mat5?.id!, quantity: 0.1, unitOfMeasure: 'kg' },
-      
-//       // BOM for Gadget B
-//       { bomId: bom2?.id!, materialId: mat2?.id!, quantity: 8.0, unitOfMeasure: 'pcs' },
-//       { bomId: bom2?.id!, materialId: mat4?.id!, quantity: 2.5, unitOfMeasure: 'kg' },
-      
-//       // BOM for Component C
-//       { bomId: bom3?.id!, materialId: mat3?.id!, quantity: 15.0, unitOfMeasure: 'kg' },
-//       { bomId: bom3?.id!, materialId: mat5?.id!, quantity: 0.5, unitOfMeasure: 'kg' },
-      
-//       // BOM for Widget A (Rev B) - Updated formula
-//       { bomId: bom1B?.id!, materialId: mat1?.id!, quantity: 12.0, unitOfMeasure: 'kg' },
-//       { bomId: bom1B?.id!, materialId: mat3?.id!, quantity: 4.8, unitOfMeasure: 'kg' },
-//       { bomId: bom1B?.id!, materialId: mat5?.id!, quantity: 0.2, unitOfMeasure: 'kg' },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // MaterialBatch
-//   await prisma.materialBatch.createMany({
-//     data: [
-//       { materialId: mat1?.id!, batchNo: 'BATCH001', qtyReceived: 100.0, qtyAvailable: 80.5, receivedDate: new Date('2025-09-01'), expiryDate: new Date('2026-09-01') },
-//       { materialId: mat2?.id!, batchNo: 'BATCH002', qtyReceived: 50.0, qtyAvailable: 50.0, receivedDate: new Date('2025-09-10'), expiryDate: new Date('2026-09-10') },
-//       { materialId: mat3?.id!, batchNo: 'BATCH003', qtyReceived: 200.0, qtyAvailable: 180.0, receivedDate: new Date('2025-09-05'), expiryDate: new Date('2026-09-05') },
-//       { materialId: mat4?.id!, batchNo: 'BATCH004', qtyReceived: 150.0, qtyAvailable: 150.0, receivedDate: new Date('2025-09-12'), expiryDate: new Date('2026-09-12') },
-//       { materialId: mat5?.id!, batchNo: 'BATCH005', qtyReceived: 25.0, qtyAvailable: 24.5, receivedDate: new Date('2025-09-08'), expiryDate: new Date('2026-09-08') },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [batch1, batch2, batch3, batch4, batch5] = await Promise.all([
-//     prisma.materialBatch.findUnique({ where: { batchNo: 'BATCH001' } }),
-//     prisma.materialBatch.findUnique({ where: { batchNo: 'BATCH002' } }),
-//     prisma.materialBatch.findUnique({ where: { batchNo: 'BATCH003' } }),
-//     prisma.materialBatch.findUnique({ where: { batchNo: 'BATCH004' } }),
-//     prisma.materialBatch.findUnique({ where: { batchNo: 'BATCH005' } }),
-//   ]);
-
-//   // WorkOrder
-//   const planner = await prisma.user.findUnique({ where: { username: 'planner1' } });
-//   await prisma.workOrder.createMany({
-//     data: [
-//       { workOrderNo: 'WO001', productId: prod1?.id!, bomId: bom1?.id!, qtyPlanned: 100, startDate: new Date('2025-09-20'), endDate: new Date('2025-09-25'), plannerId: planner?.id!, status: 'Planned' },
-//       { workOrderNo: 'WO002', productId: prod2?.id!, bomId: bom2?.id!, qtyPlanned: 50, startDate: new Date('2025-09-22'), endDate: new Date('2025-09-26'), plannerId: planner?.id!, status: 'InProgress' },
-//       { workOrderNo: 'WO003', productId: prod3?.id!, bomId: bom3?.id!, qtyPlanned: 200, startDate: new Date('2025-09-25'), endDate: new Date('2025-09-30'), plannerId: planner?.id!, status: 'Planned' },
-//     ],
-//     skipDuplicates: true,
-//   });
-  
-//   const [wo1, wo2, wo3] = await Promise.all([
-//     prisma.workOrder.findUnique({ where: { workOrderNo: 'WO001' } }),
-//     prisma.workOrder.findUnique({ where: { workOrderNo: 'WO002' } }),
-//     prisma.workOrder.findUnique({ where: { workOrderNo: 'WO003' } }),
-//   ]);
-
-//   // CompoundingOrder
-//   const chemist = await prisma.user.findUnique({ where: { username: 'chemist1' } });
-//   const qcUser = await prisma.user.findUnique({ where: { username: 'qc1' } });
-//   const qaUser = await prisma.user.findUnique({ where: { username: 'qa1' } });
-
-//   await prisma.compoundingOrder.create({
-//     data: {
-//       workOrderId: wo1?.id!,
-//       chemistId: chemist?.id!,
-//       qcId: qcUser?.id!,
-//       qaId: qaUser?.id!,
-//       status: 'QAApproved',
-//     },
-//   });
-
-//   await prisma.compoundingOrder.create({
-//     data: {
-//       workOrderId: wo2?.id!,
-//       chemistId: chemist?.id!,
-//       qcId: qcUser?.id!,
-//       status: 'QCVerified',
-//     },
-//   });
-  
-//   const [compOrder1, compOrder2] = await Promise.all([
-//     prisma.compoundingOrder.findFirst({ where: { workOrderId: wo1?.id! } }),
-//     prisma.compoundingOrder.findFirst({ where: { workOrderId: wo2?.id! } }),
-//   ]);
-
-//   // CompoundingMaterialLine
-//   await prisma.compoundingMaterialLine.createMany({
-//     data: [
-//       // Compounding for WO001
-//       { compoundingId: compOrder1?.id!, materialId: mat1?.id!, requiredQty: 10.5, actualQty: 10.6, materialBatchId: batch1?.id! },
-//       { compoundingId: compOrder1?.id!, materialId: mat3?.id!, requiredQty: 5.2, actualQty: 5.2, materialBatchId: batch3?.id! },
-//       { compoundingId: compOrder1?.id!, materialId: mat5?.id!, requiredQty: 0.1, actualQty: 0.1, materialBatchId: batch5?.id! },
-      
-//       // Compounding for WO002
-//       { compoundingId: compOrder2?.id!, materialId: mat2?.id!, requiredQty: 8.0, actualQty: 8.0, materialBatchId: batch2?.id! },
-//       { compoundingId: compOrder2?.id!, materialId: mat4?.id!, requiredQty: 2.5, actualQty: 2.5, materialBatchId: batch4?.id! },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // ProductionBatch
-//   await prisma.productionBatch.create({
-//     data: {
-//       workOrderId: wo1?.id!,
-//       machineId: machine1?.id!,
-//       toolId: tool1?.id!,
-//       mouldId: mould1?.id!,
-//       batchNo: 'PRODBATCH001',
-//       startTime: new Date('2025-09-21T08:00:00'),
-//       endTime: new Date('2025-09-21T16:00:00'),
-//       qtyGood: 95,
-//       qtyReject: 5,
-//       status: 'Completed',
-//     },
-//   });
-
-//   await prisma.productionBatch.create({
-//     data: {
-//       workOrderId: wo2?.id!,
-//       machineId: machine2?.id!,
-//       toolId: tool2?.id!,
-//       mouldId: mould2?.id!,
-//       batchNo: 'PRODBATCH002',
-//       startTime: new Date('2025-09-22T08:00:00'),
-//       endTime: null,
-//       qtyGood: 30,
-//       qtyReject: 2,
-//       status: 'InProgress',
-//     },
-//   });
-
-//   const [prodBatch1, prodBatch2] = await Promise.all([
-//     prisma.productionBatch.findUnique({ where: { batchNo: 'PRODBATCH001' } }),
-//     prisma.productionBatch.findUnique({ where: { batchNo: 'PRODBATCH002' } }),
-//   ]);
-
-//   // ProductionRecord
-//   const [operator1, operator2] = await Promise.all([
-//     prisma.user.findUnique({ where: { username: 'operator1' } }),
-//     prisma.user.findUnique({ where: { username: 'operator2' } }),
-//   ]);
-
-//   await prisma.productionRecord.createMany({
-//     data: [
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         operatorId: operator1?.id!,
-//         taskStart: new Date('2025-09-21T08:00:00'),
-//         taskEnd: new Date('2025-09-21T16:00:00'),
-//         qtyProcessed: 100,
-//       },
-//       {
-//         productionBatchId: prodBatch2?.id!,
-//         operatorId: operator2?.id!,
-//         taskStart: new Date('2025-09-22T08:00:00'),
-//         taskEnd: null,
-//         qtyProcessed: 32,
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // ProductionMaterialConsumption
-//   await prisma.productionMaterialConsumption.createMany({
-//     data: [
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         materialBatchId: batch1?.id!,
-//         qtyConsumed: 10.6,
-//         consumedAt: new Date('2025-09-21T16:00:00'),
-//       },
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         materialBatchId: batch3?.id!,
-//         qtyConsumed: 5.2,
-//         consumedAt: new Date('2025-09-21T16:00:00'),
-//       },
-//       {
-//         productionBatchId: prodBatch2?.id!,
-//         materialBatchId: batch2?.id!,
-//         qtyConsumed: 8.0,
-//         consumedAt: new Date('2025-09-22T12:00:00'),
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // DowntimeEvent
-//   await prisma.downtimeEvent.createMany({
-//     data: [
-//       {
-//         machineId: machine1?.id!,
-//         productionBatchId: prodBatch1?.id!,
-//         startTime: new Date('2025-09-21T10:00:00'),
-//         endTime: new Date('2025-09-21T10:30:00'),
-//         category: 'Planned',
-//         cause: 'Routine maintenance',
-//         reportedBy: operator1?.id!,
-//       },
-//       {
-//         machineId: machine2?.id!,
-//         productionBatchId: prodBatch2?.id!,
-//         startTime: new Date('2025-09-22T14:00:00'),
-//         endTime: null,
-//         category: 'Unplanned',
-//         cause: 'Material jam',
-//         reportedBy: operator2?.id!,
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // QcRecord
-//   const qc = await prisma.user.findUnique({ where: { username: 'qc1' } });
-//   await prisma.qcRecord.createMany({
-//     data: [
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         inspectorId: qc?.id!,
-//         qcType: 'IPQC',
-//         checkedAt: new Date('2025-09-21T12:00:00'),
-//         result: 'Pass',
-//         remarks: 'In-process check - all parameters within spec',
-//       },
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         inspectorId: qc?.id!,
-//         qcType: 'OQC',
-//         checkedAt: new Date('2025-09-21T17:00:00'),
-//         result: 'Pass',
-//         remarks: 'Final inspection completed successfully',
-//       },
-//       {
-//         productionBatchId: prodBatch2?.id!,
-//         inspectorId: qc?.id!,
-//         qcType: 'IPQC',
-//         checkedAt: new Date('2025-09-22T11:00:00'),
-//         result: 'Fail',
-//         remarks: 'Dimension out of tolerance',
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   const [qcRec1, qcRec2, qcRec3] = await Promise.all([
-//     prisma.qcRecord.findFirst({ where: { productionBatchId: prodBatch1?.id!, qcType: 'IPQC' } }),
-//     prisma.qcRecord.findFirst({ where: { productionBatchId: prodBatch1?.id!, qcType: 'OQC' } }),
-//     prisma.qcRecord.findFirst({ where: { productionBatchId: prodBatch2?.id! } }),
-//   ]);
-
-//   // QcTestParameter
-//   await prisma.qcTestParameter.createMany({
-//     data: [
-//       {
-//         qcId: qcRec1?.id!,
-//         parameterName: 'Length',
-//         expectedValue: '100mm ± 0.5mm',
-//         actualValue: '100.2mm',
-//         status: 'Pass',
-//       },
-//       {
-//         qcId: qcRec1?.id!,
-//         parameterName: 'Weight',
-//         expectedValue: '50g ± 2g',
-//         actualValue: '51g',
-//         status: 'Pass',
-//       },
-//       {
-//         qcId: qcRec2?.id!,
-//         parameterName: 'Surface Finish',
-//         expectedValue: 'Smooth',
-//         actualValue: 'Smooth',
-//         status: 'Pass',
-//       },
-//       {
-//         qcId: qcRec3?.id!,
-//         parameterName: 'Width',
-//         expectedValue: '50mm ± 0.3mm',
-//         actualValue: '50.8mm',
-//         status: 'Fail',
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // RejectScrap
-//   await prisma.rejectScrap.createMany({
-//     data: [
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         qcId: qcRec1?.id!,
-//         reason: 'Short shot',
-//         quantity: 3,
-//         disposition: 'Rework',
-//       },
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         qcId: qcRec2?.id!,
-//         reason: 'Flash',
-//         quantity: 2,
-//         disposition: 'Scrap',
-//       },
-//       {
-//         productionBatchId: prodBatch2?.id!,
-//         qcId: qcRec3?.id!,
-//         reason: 'Dimension out of tolerance',
-//         quantity: 2,
-//         disposition: 'Rework',
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   // PackingRecord
-//   const qa = await prisma.user.findUnique({ where: { username: 'qa1' } });
-//   await prisma.packingRecord.createMany({
-//     data: [
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         packedById: qa?.id!,
-//         packageType: 'Cardboard Box',
-//         qtyPacked: 90,
-//         packedAt: new Date('2025-09-21T18:00:00'),
-//       },
-//       {
-//         productionBatchId: prodBatch1?.id!,
-//         packedById: qa?.id!,
-//         packageType: 'Cardboard Box',
-//         qtyPacked: 5,
-//         packedAt: new Date('2025-09-21T18:30:00'),
-//       },
-//     ],
-//     skipDuplicates: true,
-//   });
-
-//   console.log('🌱 Seeding completed successfully!');
-//   console.log('📊 Created:');
-//   console.log('  - 6 Roles');
-//   console.log('  - 7 Users');
-//   console.log('  - 3 Suppliers');
-//   console.log('  - 5 Materials with batches');
-//   console.log('  - 3 Products with BOMs');
-//   console.log('  - 3 Machines');
-//   console.log('  - 3 Tools and 3 Moulds');
-//   console.log('  - 3 Work Orders');
-//   console.log('  - 2 Compounding Orders');
-//   console.log('  - 2 Production Batches');
-//   console.log('  - QC Records, Test Parameters, and Reject Scraps');
-//   console.log('  - Packing Records');
-// }
-
-// main()
-//   .then(() => console.log('✅ Database seeding completed'))
-//   .catch((e) => {
-//     console.error('❌ Seeding failed:', e);
-//     process.exit(1);
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect();
-//   });
-
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.maintenance.createMany({
-    data: [
-      {
-        machineId: 1,
-        scheduledDate: new Date("2025-06-20"),
-        maintenanceType: "Preventive",
-        assignedTo: 2, // technician user_id
-        status: "Scheduled",
-        description: "Monthly check-up",
-        remarks: "Monthly check-up"
+  console.log('🌱 Starting database seeding...');
+
+  // Clean existing data (in correct order due to foreign keys)
+  await prisma.auditLog.deleteMany();
+  await prisma.shipment.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.inventory.deleteMany();
+  await prisma.receivingItem.deleteMany();
+  await prisma.receiving.deleteMany();
+  await prisma.epc.deleteMany();
+  await prisma.productCertificate.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.section.deleteMany();
+  await prisma.rack.deleteMany();
+  await prisma.warehouse.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.supplier.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+
+  console.log('🗑️  Cleared existing data');
+
+  // Seed Roles
+  const adminRole = await prisma.role.create({
+    data: {
+      name: 'Admin',
+      permissions: {
+        users: ['create', 'read', 'update', 'delete'],
+        warehouses: ['create', 'read', 'update', 'delete'],
+        products: ['create', 'read', 'update', 'delete'],
+        orders: ['create', 'read', 'update', 'delete'],
+        inventory: ['create', 'read', 'update', 'delete'],
       },
-      {
-        machineId: 2,
-        scheduledDate: new Date("2025-06-21"),
-        maintenanceType: "Corrective",
-        assignedTo: 3,
-        status: "In Progress",
-        description: "Motor temperature abnormal",
-        remarks: "Motor temperature abnormal"
-      },
-      {
-        machineId: 3,
-        scheduledDate: new Date("2025-06-17"),
-        maintenanceType: "Preventive",
-        assignedTo: 4,
-        status: "Completed",
-        description: "Routine preventive check",
-        remarks: "All parts functioning well"
-      },
-    ],
+    },
   });
 
-  console.log("✅ Maintenance table seeded!");
+  const managerRole = await prisma.role.create({
+    data: {
+      name: 'Warehouse Manager',
+      permissions: {
+        warehouses: ['read', 'update'],
+        products: ['read', 'update'],
+        orders: ['create', 'read', 'update'],
+        inventory: ['read', 'update'],
+      },
+    },
+  });
+
+  const operatorRole = await prisma.role.create({
+    data: {
+      name: 'Warehouse Operator',
+      permissions: {
+        products: ['read'],
+        orders: ['read'],
+        inventory: ['read', 'update'],
+        receiving: ['create', 'read'],
+      },
+    },
+  });
+
+  console.log('✅ Roles created');
+
+  // Seed Users
+  const passwordHash = await bcrypt.hash('password123', 10);
+
+  const adminUser = await prisma.user.create({
+    data: {
+      username: 'admin',
+      email: 'admin@warehouse.com',
+      passwordHash,
+      fullName: 'System Administrator',
+      phone: '+60123456789',
+      roleId: adminRole.id,
+      language: 'en',
+    },
+  });
+
+  const managerUser = await prisma.user.create({
+    data: {
+      username: 'manager1',
+      email: 'manager@warehouse.com',
+      passwordHash,
+      fullName: 'John Manager',
+      phone: '+60123456790',
+      roleId: managerRole.id,
+      language: 'en',
+    },
+  });
+
+  const operatorUser = await prisma.user.create({
+    data: {
+      username: 'operator1',
+      email: 'operator@warehouse.com',
+      passwordHash,
+      fullName: 'Jane Operator',
+      phone: '+60123456791',
+      roleId: operatorRole.id,
+      language: 'en',
+    },
+  });
+
+  console.log('✅ Users created (password: password123)');
+
+  // Seed Warehouses
+  const mainWarehouse = await prisma.warehouse.create({
+    data: {
+      warehouseCode: 'WH-001',
+      name: 'Main Warehouse Johor',
+      address: 'Jalan Industri 1, Senai Industrial Park, 81400 Senai, Johor',
+      manager: 'John Manager',
+      contactPhone: '+60712345678',
+      email: 'mainwh@warehouse.com',
+      status: 'Active',
+      remark: 'Primary warehouse facility',
+    },
+  });
+
+  const secondaryWarehouse = await prisma.warehouse.create({
+    data: {
+      warehouseCode: 'WH-002',
+      name: 'Secondary Warehouse JB',
+      address: 'Jalan Perniagaan 5, Taman Perindustrian, 81100 Johor Bahru',
+      manager: 'Sarah Lee',
+      contactPhone: '+60712345679',
+      email: 'secondarywh@warehouse.com',
+      status: 'Active',
+    },
+  });
+
+  console.log('✅ Warehouses created');
+
+  // Seed Racks
+  const rack1 = await prisma.rack.create({
+    data: {
+      warehouseId: mainWarehouse.id,
+      rackCode: 'R-A-001',
+      rackName: 'Rack A1',
+      rackType: 'Heavy Duty',
+      capacity: 1000,
+      status: 'Active',
+    },
+  });
+
+  const rack2 = await prisma.rack.create({
+    data: {
+      warehouseId: mainWarehouse.id,
+      rackCode: 'R-A-002',
+      rackName: 'Rack A2',
+      rackType: 'Heavy Duty',
+      capacity: 1000,
+      status: 'Active',
+    },
+  });
+
+  const rack3 = await prisma.rack.create({
+    data: {
+      warehouseId: secondaryWarehouse.id,
+      rackCode: 'R-B-001',
+      rackName: 'Rack B1',
+      rackType: 'Standard',
+      capacity: 500,
+      status: 'Active',
+    },
+  });
+
+  console.log('✅ Racks created');
+
+  // Seed Sections
+  const sections = await Promise.all([
+    prisma.section.create({
+      data: {
+        warehouseId: mainWarehouse.id,
+        rackId: rack1.id,
+        sectionCode: 'S-A001-01',
+        sectionName: 'Section A1-01',
+        capacity: 100,
+        status: 'Active',
+      },
+    }),
+    prisma.section.create({
+      data: {
+        warehouseId: mainWarehouse.id,
+        rackId: rack1.id,
+        sectionCode: 'S-A001-02',
+        sectionName: 'Section A1-02',
+        capacity: 100,
+        status: 'Active',
+      },
+    }),
+    prisma.section.create({
+      data: {
+        warehouseId: mainWarehouse.id,
+        rackId: rack2.id,
+        sectionCode: 'S-A002-01',
+        sectionName: 'Section A2-01',
+        capacity: 100,
+        status: 'Active',
+      },
+    }),
+    prisma.section.create({
+      data: {
+        warehouseId: secondaryWarehouse.id,
+        rackId: rack3.id,
+        sectionCode: 'S-B001-01',
+        sectionName: 'Section B1-01',
+        capacity: 50,
+        status: 'Active',
+      },
+    }),
+  ]);
+
+  console.log('✅ Sections created');
+
+  // Seed Suppliers
+  const supplier1 = await prisma.supplier.create({
+    data: {
+      supplierCode: 'SUP-001',
+      supplierName: 'Tech Components Sdn Bhd',
+      manager: 'Ahmad Rahman',
+      contactPhone: '+60312345678',
+      email: 'contact@techcomponents.com.my',
+      status: 'Active',
+    },
+  });
+
+  const supplier2 = await prisma.supplier.create({
+    data: {
+      supplierCode: 'SUP-002',
+      supplierName: 'Global Electronics Supply',
+      manager: 'David Tan',
+      contactPhone: '+60312345679',
+      email: 'sales@globalelec.com',
+      status: 'Active',
+    },
+  });
+
+  console.log('✅ Suppliers created');
+
+  // Seed Customers
+  const customer1 = await prisma.customer.create({
+    data: {
+      customerCode: 'CUS-001',
+      customerName: 'ABC Manufacturing Sdn Bhd',
+      contactPerson: 'Michael Wong',
+      phone: '+60387654321',
+      email: 'procurement@abcmfg.com.my',
+      address: 'No. 123, Jalan Industri, Taman Perindustrian',
+      city: 'Shah Alam',
+      status: 'Active',
+    },
+  });
+
+  const customer2 = await prisma.customer.create({
+    data: {
+      customerCode: 'CUS-002',
+      customerName: 'XYZ Retail Sdn Bhd',
+      contactPerson: 'Lisa Lim',
+      phone: '+60387654322',
+      email: 'orders@xyzretail.com',
+      address: 'Lot 45, Jalan Perniagaan, Taman Sentosa',
+      city: 'Johor Bahru',
+      status: 'Active',
+    },
+  });
+
+  console.log('✅ Customers created');
+
+  // Seed Categories
+  const electronicsCategory = await prisma.category.create({
+    data: {
+      categoryCode: 'CAT-ELEC',
+      name: 'Electronics',
+      level: 1,
+      storageRequirements: 'Climate controlled, humidity < 60%',
+      status: 'Active',
+    },
+  });
+
+  const componentsCategory = await prisma.category.create({
+    data: {
+      categoryCode: 'CAT-COMP',
+      name: 'Electronic Components',
+      parentCategoryId: electronicsCategory.id,
+      level: 2,
+      storageRequirements: 'Dry storage, ESD protection',
+      status: 'Active',
+    },
+  });
+
+  const rawMaterialsCategory = await prisma.category.create({
+    data: {
+      categoryCode: 'CAT-RAW',
+      name: 'Raw Materials',
+      level: 1,
+      storageRequirements: 'Standard warehouse conditions',
+      status: 'Active',
+    },
+  });
+
+  console.log('✅ Categories created');
+
+  // Seed Products
+  const product1 = await prisma.product.create({
+    data: {
+      skuCode: 'SKU-RES-001',
+      productCode: 'PROD-001',
+      name: 'Resistor 10K Ohm 1/4W',
+      categoryId: componentsCategory.id,
+      supplierId: supplier1.id,
+      status: 'Active',
+      remarks: 'Standard tolerance ±5%',
+    },
+  });
+
+  const product2 = await prisma.product.create({
+    data: {
+      skuCode: 'SKU-CAP-001',
+      productCode: 'PROD-002',
+      name: 'Capacitor 100uF 16V',
+      categoryId: componentsCategory.id,
+      supplierId: supplier1.id,
+      status: 'Active',
+      remarks: 'Electrolytic capacitor',
+    },
+  });
+
+  const product3 = await prisma.product.create({
+    data: {
+      skuCode: 'SKU-IC-001',
+      productCode: 'PROD-003',
+      name: 'Microcontroller ATmega328P',
+      categoryId: componentsCategory.id,
+      supplierId: supplier2.id,
+      status: 'Active',
+      remarks: 'Arduino compatible MCU',
+    },
+  });
+
+  console.log('✅ Products created');
+
+  // Seed Product Certificates
+  await Promise.all([
+    prisma.productCertificate.create({
+      data: {
+        productId: product3.id,
+        certificateName: 'RoHS Compliance Certificate',
+        certificateFileUrl: '/certificates/rohs-atmega328p.pdf',
+      },
+    }),
+    prisma.productCertificate.create({
+      data: {
+        productId: product3.id,
+        certificateName: 'CE Certificate',
+        certificateFileUrl: '/certificates/ce-atmega328p.pdf',
+      },
+    }),
+  ]);
+
+  console.log('✅ Product certificates created');
+
+  // Seed EPCs
+  await Promise.all([
+    prisma.epc.create({
+      data: {
+        epcCode: 'EPC-001-2024-0001',
+        productId: product1.id,
+        batchName: 'Batch January 2024',
+        batchNumber: 1,
+        status: 'Active',
+      },
+    }),
+    prisma.epc.create({
+      data: {
+        epcCode: 'EPC-002-2024-0001',
+        productId: product2.id,
+        batchName: 'Batch January 2024',
+        batchNumber: 1,
+        status: 'Active',
+      },
+    }),
+  ]);
+
+  console.log('✅ EPCs created');
+
+  // Seed Receivings
+  const receiving1 = await prisma.receiving.create({
+    data: {
+      receivingCode: 'RCV-2024-001',
+      doNumber: 'DO-SUP001-2024-001',
+      warehouseId: mainWarehouse.id,
+      supplierId: supplier1.id,
+      receivingDate: new Date('2024-01-15'),
+      receivedBy: 'Jane Operator',
+      remarks: 'All items in good condition',
+      createdBy: operatorUser.id,
+    },
+  });
+
+  const receiving2 = await prisma.receiving.create({
+    data: {
+      receivingCode: 'RCV-2024-002',
+      doNumber: 'DO-SUP002-2024-001',
+      warehouseId: mainWarehouse.id,
+      supplierId: supplier2.id,
+      receivingDate: new Date('2024-01-20'),
+      receivedBy: 'Jane Operator',
+      remarks: 'Partial delivery - 2 items pending',
+      createdBy: operatorUser.id,
+    },
+  });
+
+  console.log('✅ Receivings created');
+
+  // Seed Receiving Items
+  await Promise.all([
+    prisma.receivingItem.create({
+      data: {
+        receivingId: receiving1.id,
+        productId: product1.id,
+        quantity: 5000,
+        unit: 'pcs',
+      },
+    }),
+    prisma.receivingItem.create({
+      data: {
+        receivingId: receiving1.id,
+        productId: product2.id,
+        quantity: 3000,
+        unit: 'pcs',
+      },
+    }),
+    prisma.receivingItem.create({
+      data: {
+        receivingId: receiving2.id,
+        productId: product3.id,
+        quantity: 500,
+        unit: 'pcs',
+      },
+    }),
+  ]);
+
+  console.log('✅ Receiving items created');
+
+  // Seed Inventory
+  await Promise.all([
+    prisma.inventory.create({
+      data: {
+        productId: product1.id,
+        warehouseId: mainWarehouse.id,
+        rackId: rack1.id,
+        sectionId: sections[0].id,
+        quantity: 4500,
+        lastUpdatedAt: new Date(),
+      },
+    }),
+    prisma.inventory.create({
+      data: {
+        productId: product2.id,
+        warehouseId: mainWarehouse.id,
+        rackId: rack1.id,
+        sectionId: sections[1].id,
+        quantity: 2800,
+        lastUpdatedAt: new Date(),
+      },
+    }),
+    prisma.inventory.create({
+      data: {
+        productId: product3.id,
+        warehouseId: mainWarehouse.id,
+        rackId: rack2.id,
+        sectionId: sections[2].id,
+        quantity: 450,
+        lastUpdatedAt: new Date(),
+      },
+    }),
+  ]);
+
+  console.log('✅ Inventory created');
+
+  // Seed Orders (Purchase Orders and Delivery Orders)
+  const purchaseOrder = await prisma.order.create({
+    data: {
+      orderType: 'PO',
+      orderNo: 'PO-2024-001',
+      supplierId: supplier1.id,
+      picName: 'John Manager',
+      status: 'Confirmed',
+      estimatedDeliveryTime: new Date('2024-02-15'),
+      remarks: 'Urgent order for production',
+      createdBy: managerUser.id,
+    },
+  });
+
+  const deliveryOrder1 = await prisma.order.create({
+    data: {
+      orderType: 'DO',
+      orderNo: 'DO-2024-001',
+      customerId: customer1.id,
+      picName: 'Jane Operator',
+      status: 'Processing',
+      estimatedDeliveryTime: new Date('2024-02-01'),
+      remarks: 'Standard delivery',
+      createdBy: operatorUser.id,
+    },
+  });
+
+  const deliveryOrder2 = await prisma.order.create({
+    data: {
+      orderType: 'DO',
+      orderNo: 'DO-2024-002',
+      customerId: customer2.id,
+      picName: 'Jane Operator',
+      status: 'Shipped',
+      estimatedDeliveryTime: new Date('2024-01-25'),
+      remarks: 'Express delivery',
+      createdBy: operatorUser.id,
+    },
+  });
+
+  console.log('✅ Orders created');
+
+  // Seed Order Items
+  await Promise.all([
+    prisma.orderItem.create({
+      data: {
+        orderId: purchaseOrder.id,
+        productId: product1.id,
+        quantity: 10000,
+      },
+    }),
+    prisma.orderItem.create({
+      data: {
+        orderId: deliveryOrder1.id,
+        productId: product1.id,
+        quantity: 500,
+      },
+    }),
+    prisma.orderItem.create({
+      data: {
+        orderId: deliveryOrder1.id,
+        productId: product2.id,
+        quantity: 200,
+      },
+    }),
+    prisma.orderItem.create({
+      data: {
+        orderId: deliveryOrder2.id,
+        productId: product3.id,
+        quantity: 50,
+      },
+    }),
+  ]);
+
+  console.log('✅ Order items created');
+
+  // Seed Shipments
+  await Promise.all([
+    prisma.shipment.create({
+      data: {
+        trackingCode: 'TRK-2024-001',
+        orderId: deliveryOrder2.id,
+        carrier: 'DHL Express',
+        shippingDate: new Date('2024-01-22'),
+        estimatedDeliveryDate: new Date('2024-01-25'),
+        destination: 'Lot 45, Jalan Perniagaan, Taman Sentosa, Johor Bahru',
+        state: 'In Transit',
+        remark: 'Priority delivery',
+      },
+    }),
+    prisma.shipment.create({
+      data: {
+        trackingCode: 'TRK-2024-002',
+        orderId: deliveryOrder1.id,
+        carrier: 'Pos Malaysia',
+        shippingDate: new Date('2024-01-28'),
+        estimatedDeliveryDate: new Date('2024-02-01'),
+        destination: 'No. 123, Jalan Industri, Taman Perindustrian, Shah Alam',
+        state: 'Preparing',
+        remark: 'Standard shipping',
+      },
+    }),
+  ]);
+
+  console.log('✅ Shipments created');
+
+  // Seed Audit Logs
+  await Promise.all([
+    prisma.auditLog.create({
+      data: {
+        userId: operatorUser.id,
+        action: 'CREATE',
+        tableName: 'receivings',
+        rowId: receiving1.id,
+        diff: {
+          created: {
+            receivingCode: 'RCV-2024-001',
+            doNumber: 'DO-SUP001-2024-001',
+          },
+        },
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: managerUser.id,
+        action: 'UPDATE',
+        tableName: 'orders',
+        rowId: deliveryOrder2.id,
+        diff: {
+          before: { status: 'Processing' },
+          after: { status: 'Shipped' },
+        },
+      },
+    }),
+  ]);
+
+  console.log('✅ Audit logs created');
+
+  console.log('');
+  console.log('🎉 Seeding completed successfully!');
+  console.log('');
+  console.log('📊 Summary:');
+  console.log('   - 3 Roles');
+  console.log('   - 3 Users (admin, manager1, operator1)');
+  console.log('   - 2 Warehouses');
+  console.log('   - 3 Racks');
+  console.log('   - 4 Sections');
+  console.log('   - 2 Suppliers');
+  console.log('   - 2 Customers');
+  console.log('   - 3 Categories');
+  console.log('   - 3 Products');
+  console.log('   - 2 Receivings');
+  console.log('   - 3 Orders (1 PO, 2 DO)');
+  console.log('   - 3 Inventory records');
+  console.log('   - 2 Shipments');
+  console.log('');
+  console.log('🔑 Login credentials:');
+  console.log('   Admin: admin@warehouse.com / password123');
+  console.log('   Manager: manager@warehouse.com / password123');
+  console.log('   Operator: operator@warehouse.com / password123');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {
