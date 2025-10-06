@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -69,13 +68,11 @@ async function main() {
   console.log('✅ Roles created');
 
   // Seed Users
-  const passwordHash = await bcrypt.hash('password123', 10);
-
   const adminUser = await prisma.user.create({
     data: {
       username: 'admin',
       email: 'admin@warehouse.com',
-      passwordHash,
+      passwordHash: 'password123', // In production, use proper hashing
       fullName: 'System Administrator',
       phone: '+60123456789',
       roleId: adminRole.id,
@@ -87,7 +84,7 @@ async function main() {
     data: {
       username: 'manager1',
       email: 'manager@warehouse.com',
-      passwordHash,
+      passwordHash: 'password123',
       fullName: 'John Manager',
       phone: '+60123456790',
       roleId: managerRole.id,
@@ -99,7 +96,7 @@ async function main() {
     data: {
       username: 'operator1',
       email: 'operator@warehouse.com',
-      passwordHash,
+      passwordHash: 'password123',
       fullName: 'Jane Operator',
       phone: '+60123456791',
       roleId: operatorRole.id,
@@ -174,48 +171,49 @@ async function main() {
   console.log('✅ Racks created');
 
   // Seed Sections
-  const sections = await Promise.all([
-    prisma.section.create({
-      data: {
-        warehouseId: mainWarehouse.id,
-        rackId: rack1.id,
-        sectionCode: 'S-A001-01',
-        sectionName: 'Section A1-01',
-        capacity: 100,
-        status: 'Active',
-      },
-    }),
-    prisma.section.create({
-      data: {
-        warehouseId: mainWarehouse.id,
-        rackId: rack1.id,
-        sectionCode: 'S-A001-02',
-        sectionName: 'Section A1-02',
-        capacity: 100,
-        status: 'Active',
-      },
-    }),
-    prisma.section.create({
-      data: {
-        warehouseId: mainWarehouse.id,
-        rackId: rack2.id,
-        sectionCode: 'S-A002-01',
-        sectionName: 'Section A2-01',
-        capacity: 100,
-        status: 'Active',
-      },
-    }),
-    prisma.section.create({
-      data: {
-        warehouseId: secondaryWarehouse.id,
-        rackId: rack3.id,
-        sectionCode: 'S-B001-01',
-        sectionName: 'Section B1-01',
-        capacity: 50,
-        status: 'Active',
-      },
-    }),
-  ]);
+  const section1 = await prisma.section.create({
+    data: {
+      warehouseId: mainWarehouse.id,
+      rackId: rack1.id,
+      sectionCode: 'S-A001-01',
+      sectionName: 'Section A1-01',
+      capacity: 100,
+      status: 'Active',
+    },
+  });
+
+  const section2 = await prisma.section.create({
+    data: {
+      warehouseId: mainWarehouse.id,
+      rackId: rack1.id,
+      sectionCode: 'S-A001-02',
+      sectionName: 'Section A1-02',
+      capacity: 100,
+      status: 'Active',
+    },
+  });
+
+  const section3 = await prisma.section.create({
+    data: {
+      warehouseId: mainWarehouse.id,
+      rackId: rack2.id,
+      sectionCode: 'S-A002-01',
+      sectionName: 'Section A2-01',
+      capacity: 100,
+      status: 'Active',
+    },
+  });
+
+  const section4 = await prisma.section.create({
+    data: {
+      warehouseId: secondaryWarehouse.id,
+      rackId: rack3.id,
+      sectionCode: 'S-B001-01',
+      sectionName: 'Section B1-01',
+      capacity: 50,
+      status: 'Active',
+    },
+  });
 
   console.log('✅ Sections created');
 
@@ -347,46 +345,44 @@ async function main() {
   console.log('✅ Products created');
 
   // Seed Product Certificates
-  await Promise.all([
-    prisma.productCertificate.create({
-      data: {
-        productId: product3.id,
-        certificateName: 'RoHS Compliance Certificate',
-        certificateFileUrl: '/certificates/rohs-atmega328p.pdf',
-      },
-    }),
-    prisma.productCertificate.create({
-      data: {
-        productId: product3.id,
-        certificateName: 'CE Certificate',
-        certificateFileUrl: '/certificates/ce-atmega328p.pdf',
-      },
-    }),
-  ]);
+  await prisma.productCertificate.create({
+    data: {
+      productId: product3.id,
+      certificateName: 'RoHS Compliance Certificate',
+      certificateFileUrl: '/certificates/rohs-atmega328p.pdf',
+    },
+  });
+
+  await prisma.productCertificate.create({
+    data: {
+      productId: product3.id,
+      certificateName: 'CE Certificate',
+      certificateFileUrl: '/certificates/ce-atmega328p.pdf',
+    },
+  });
 
   console.log('✅ Product certificates created');
 
   // Seed EPCs
-  await Promise.all([
-    prisma.epc.create({
-      data: {
-        epcCode: 'EPC-001-2024-0001',
-        productId: product1.id,
-        batchName: 'Batch January 2024',
-        batchNumber: 1,
-        status: 'Active',
-      },
-    }),
-    prisma.epc.create({
-      data: {
-        epcCode: 'EPC-002-2024-0001',
-        productId: product2.id,
-        batchName: 'Batch January 2024',
-        batchNumber: 1,
-        status: 'Active',
-      },
-    }),
-  ]);
+  await prisma.epc.create({
+    data: {
+      epcCode: 'EPC-001-2024-0001',
+      productId: product1.id,
+      batchName: 'Batch January 2024',
+      batchNumber: 1,
+      status: 'Active',
+    },
+  });
+
+  await prisma.epc.create({
+    data: {
+      epcCode: 'EPC-002-2024-0001',
+      productId: product2.id,
+      batchName: 'Batch January 2024',
+      batchNumber: 1,
+      status: 'Active',
+    },
+  });
 
   console.log('✅ EPCs created');
 
@@ -420,68 +416,68 @@ async function main() {
   console.log('✅ Receivings created');
 
   // Seed Receiving Items
-  await Promise.all([
-    prisma.receivingItem.create({
-      data: {
-        receivingId: receiving1.id,
-        productId: product1.id,
-        quantity: 5000,
-        unit: 'pcs',
-      },
-    }),
-    prisma.receivingItem.create({
-      data: {
-        receivingId: receiving1.id,
-        productId: product2.id,
-        quantity: 3000,
-        unit: 'pcs',
-      },
-    }),
-    prisma.receivingItem.create({
-      data: {
-        receivingId: receiving2.id,
-        productId: product3.id,
-        quantity: 500,
-        unit: 'pcs',
-      },
-    }),
-  ]);
+  await prisma.receivingItem.create({
+    data: {
+      receivingId: receiving1.id,
+      productId: product1.id,
+      quantity: 5000,
+      unit: 'pcs',
+    },
+  });
+
+  await prisma.receivingItem.create({
+    data: {
+      receivingId: receiving1.id,
+      productId: product2.id,
+      quantity: 3000,
+      unit: 'pcs',
+    },
+  });
+
+  await prisma.receivingItem.create({
+    data: {
+      receivingId: receiving2.id,
+      productId: product3.id,
+      quantity: 500,
+      unit: 'pcs',
+    },
+  });
 
   console.log('✅ Receiving items created');
 
   // Seed Inventory
-  await Promise.all([
-    prisma.inventory.create({
-      data: {
-        productId: product1.id,
-        warehouseId: mainWarehouse.id,
-        rackId: rack1.id,
-        sectionId: sections[0].id,
-        quantity: 4500,
-        lastUpdatedAt: new Date(),
-      },
-    }),
-    prisma.inventory.create({
-      data: {
-        productId: product2.id,
-        warehouseId: mainWarehouse.id,
-        rackId: rack1.id,
-        sectionId: sections[1].id,
-        quantity: 2800,
-        lastUpdatedAt: new Date(),
-      },
-    }),
-    prisma.inventory.create({
-      data: {
-        productId: product3.id,
-        warehouseId: mainWarehouse.id,
-        rackId: rack2.id,
-        sectionId: sections[2].id,
-        quantity: 450,
-        lastUpdatedAt: new Date(),
-      },
-    }),
-  ]);
+  await prisma.inventory.create({
+    data: {
+      productId: product1.id,
+      warehouseId: mainWarehouse.id,
+      rackId: rack1.id,
+      sectionId: section1.id,
+      quantity: 4500,
+      lastUpdatedAt: new Date(),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      productId: product2.id,
+      warehouseId: mainWarehouse.id,
+      rackId: rack1.id,
+      sectionId: section2.id,
+      quantity: 2800,
+      lastUpdatedAt: new Date(),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      productId: product3.id,
+      warehouseId: mainWarehouse.id,
+      rackId: rack2.id,
+      sectionId: section3.id,
+      quantity: 450,
+      lastUpdatedAt: new Date(),
+    },
+  });
 
   console.log('✅ Inventory created');
 
@@ -528,98 +524,97 @@ async function main() {
   console.log('✅ Orders created');
 
   // Seed Order Items
-  await Promise.all([
-    prisma.orderItem.create({
-      data: {
-        orderId: purchaseOrder.id,
-        productId: product1.id,
-        quantity: 10000,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        orderId: deliveryOrder1.id,
-        productId: product1.id,
-        quantity: 500,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        orderId: deliveryOrder1.id,
-        productId: product2.id,
-        quantity: 200,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        orderId: deliveryOrder2.id,
-        productId: product3.id,
-        quantity: 50,
-      },
-    }),
-  ]);
+  await prisma.orderItem.create({
+    data: {
+      orderId: purchaseOrder.id,
+      productId: product1.id,
+      quantity: 10000,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: deliveryOrder1.id,
+      productId: product1.id,
+      quantity: 500,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: deliveryOrder1.id,
+      productId: product2.id,
+      quantity: 200,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: deliveryOrder2.id,
+      productId: product3.id,
+      quantity: 50,
+    },
+  });
 
   console.log('✅ Order items created');
 
   // Seed Shipments
-  await Promise.all([
-    prisma.shipment.create({
-      data: {
-        trackingCode: 'TRK-2024-001',
-        orderId: deliveryOrder2.id,
-        carrier: 'DHL Express',
-        shippingDate: new Date('2024-01-22'),
-        estimatedDeliveryDate: new Date('2024-01-25'),
-        destination: 'Lot 45, Jalan Perniagaan, Taman Sentosa, Johor Bahru',
-        state: 'In Transit',
-        remark: 'Priority delivery',
-      },
-    }),
-    prisma.shipment.create({
-      data: {
-        trackingCode: 'TRK-2024-002',
-        orderId: deliveryOrder1.id,
-        carrier: 'Pos Malaysia',
-        shippingDate: new Date('2024-01-28'),
-        estimatedDeliveryDate: new Date('2024-02-01'),
-        destination: 'No. 123, Jalan Industri, Taman Perindustrian, Shah Alam',
-        state: 'Preparing',
-        remark: 'Standard shipping',
-      },
-    }),
-  ]);
+  await prisma.shipment.create({
+    data: {
+      trackingCode: 'TRK-2024-001',
+      orderId: deliveryOrder2.id,
+      carrier: 'DHL Express',
+      shippingDate: new Date('2024-01-22'),
+      estimatedDeliveryDate: new Date('2024-01-25'),
+      destination: 'Lot 45, Jalan Perniagaan, Taman Sentosa, Johor Bahru',
+      state: 'In Transit',
+      remark: 'Priority delivery',
+    },
+  });
+
+  await prisma.shipment.create({
+    data: {
+      trackingCode: 'TRK-2024-002',
+      orderId: deliveryOrder1.id,
+      carrier: 'Pos Malaysia',
+      shippingDate: new Date('2024-01-28'),
+      estimatedDeliveryDate: new Date('2024-02-01'),
+      destination: 'No. 123, Jalan Industri, Taman Perindustrian, Shah Alam',
+      state: 'Preparing',
+      remark: 'Standard shipping',
+    },
+  });
 
   console.log('✅ Shipments created');
 
   // Seed Audit Logs
-  await Promise.all([
-    prisma.auditLog.create({
-      data: {
-        userId: operatorUser.id,
-        action: 'CREATE',
-        tableName: 'receivings',
-        rowId: receiving1.id,
-        diff: {
-          created: {
-            receivingCode: 'RCV-2024-001',
-            doNumber: 'DO-SUP001-2024-001',
-          },
+  await prisma.auditLog.create({
+    data: {
+      userId: operatorUser.id,
+      action: 'CREATE',
+      tableName: 'receivings',
+      rowId: receiving1.id,
+      diff: {
+        created: {
+          receivingCode: 'RCV-2024-001',
+          doNumber: 'DO-SUP001-2024-001',
         },
       },
-    }),
-    prisma.auditLog.create({
-      data: {
-        userId: managerUser.id,
-        action: 'UPDATE',
-        tableName: 'orders',
-        rowId: deliveryOrder2.id,
-        diff: {
-          before: { status: 'Processing' },
-          after: { status: 'Shipped' },
-        },
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: managerUser.id,
+      action: 'UPDATE',
+      tableName: 'orders',
+      rowId: deliveryOrder2.id,
+      diff: {
+        before: { status: 'Processing' },
+        after: { status: 'Shipped' },
       },
-    }),
-  ]);
+    },
+  });
 
   console.log('✅ Audit logs created');
 
