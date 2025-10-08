@@ -29,4 +29,10 @@ export class SupplierController {
   remove(@Param('id') id: string) {
     return this.supplierService.remove(id);
   }
+
+  @Post('bulk-delete')
+  bulkDelete(@Body() body: { ids: number[] }) {
+    const ids = body?.ids || [];
+    return this.supplierService.removeMany(ids);
+  }
 }

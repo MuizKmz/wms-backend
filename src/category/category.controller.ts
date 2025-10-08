@@ -29,4 +29,10 @@ export class CategoryController {
   remove(@Param('id') id: string) {
     return this.categoryService.remove(id);
   }
+
+  @Post('bulk-delete')
+  bulkDelete(@Body() body: { ids: number[] }) {
+    const ids = Array.isArray(body?.ids) ? body.ids : [];
+    return this.categoryService.removeMany(ids);
+  }
 }

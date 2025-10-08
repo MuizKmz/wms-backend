@@ -29,4 +29,11 @@ export class ProductController {
   remove(@Param('id') id: string) {
     return this.productService.remove(id);
   }
+  
+  @Post('bulk-delete')
+  bulkDelete(@Body() body: { ids: number[] }) {
+    const ids = Array.isArray(body?.ids) ? body.ids : [];
+    return this.productService.removeMany(ids);
+  }
 }
+
