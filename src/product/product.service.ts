@@ -59,6 +59,7 @@ export class ProductService {
       include:{
         supplier:true,
         category:true,
+        receivingItems:true,
       },
     });
   }

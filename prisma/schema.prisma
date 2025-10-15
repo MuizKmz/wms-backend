@@ -11,6 +11,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum EpcStatus {
+  RECEIVED
+  DELIVERED
+  INBOUND
+  GENERATED
+}
+
 // --- Users & Roles ---
 model User {
   id              Int       @id @default(autoincrement())
@@ -192,18 +199,30 @@ model ProductCertificate {
 
   @@map("product_certificates")
 }
+model CorpCode {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(4)  // Must be 4 hex chars
+  label     String?  @db.VarChar(100)
+  createdAt DateTime @default(now())
 
+  // Relation
+  epcs      Epc[]
+
+  @@map("corp_codes")
+}
 model Epc {
   id          Int      @id @default(autoincrement())
   epcCode     String   @unique @map("epc_code") @db.VarChar(100)
   productId   Int      @map("product_id")
+  corpCodeId  Int       @map("corp_code_id")  // NEW: Link to corp code
   batchName   String?  @map("batch_name") @db.VarChar(100)
   batchNumber Int?     @map("batch_number")
-  status      String   @db.VarChar(20)
+  status      EpcStatus  @default(GENERATED)
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   product Product @relation(fields: [productId], references: [id])
+  corpCode  CorpCode  @relation(fields: [corpCodeId], references: [id])  // NEW
 
   @@map("epcs")
 }
@@ -276,9 +295,12 @@ model OrderItem {
   orderId   Int @map("order_id")
   productId Int @map("product_id")
   quantity  Int
+  status   String @default("Pending") @db.VarChar(20) 
+
+
 
   // Relations
-  order   Order   @relation(fields: [orderId], references: [id])
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
@@ -316,7 +338,7 @@ model Shipment {
   remark                String?   @db.Text
 
   // Relations
-  order Order @relation(fields: [orderId], references: [id])
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("shipments")
 }

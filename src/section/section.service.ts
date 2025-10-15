@@ -14,7 +14,10 @@ export class SectionService {
       include: {
         warehouse: true,
         rack: true,
-        inventory: true,
+        inventory:{ include:{
+          product:true
+        },
+      },
       },
     });
   }

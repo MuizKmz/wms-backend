@@ -14,6 +14,7 @@ async function main() {
   await prisma.receivingItem.deleteMany();
   await prisma.receiving.deleteMany();
   await prisma.epc.deleteMany();
+  await prisma.corpCode.deleteMany(); // NEW: Clean corp codes
   await prisma.productCertificate.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
@@ -305,10 +306,34 @@ async function main() {
 
   console.log('✅ Categories created');
 
-  // Seed Products
+  // NEW: Seed Corp Codes (must be 4 hex characters)
+  const corpCodeMain = await prisma.corpCode.create({
+    data: {
+      code: 'AA00',
+      label: 'Main Office',
+    },
+  });
+
+  const corpCodeBranch = await prisma.corpCode.create({
+    data: {
+      code: 'BB01',
+      label: 'Branch Office JB',
+    },
+  });
+
+  const corpCodeWarehouse = await prisma.corpCode.create({
+    data: {
+      code: 'CC02',
+      label: 'Warehouse Facility',
+    },
+  });
+
+  console.log('✅ Corp Codes created');
+
+  // Seed Products with SKU codes (must be 8 hex characters for EPC generation)
   const product1 = await prisma.product.create({
     data: {
-      skuCode: 'SKU-RES-001',
+      skuCode: '12345678', // 8 hex chars
       productCode: 'PROD-001',
       name: 'Resistor 10K Ohm 1/4W',
       categoryId: componentsCategory.id,
@@ -320,7 +345,7 @@ async function main() {
 
   const product2 = await prisma.product.create({
     data: {
-      skuCode: 'SKU-CAP-001',
+      skuCode: 'ABCDEF01', // 8 hex chars
       productCode: 'PROD-002',
       name: 'Capacitor 100uF 16V',
       categoryId: componentsCategory.id,
@@ -332,7 +357,7 @@ async function main() {
 
   const product3 = await prisma.product.create({
     data: {
-      skuCode: 'SKU-IC-001',
+      skuCode: '9876FEDC', // 8 hex chars
       productCode: 'PROD-003',
       name: 'Microcontroller ATmega328P',
       categoryId: componentsCategory.id,
@@ -363,28 +388,37 @@ async function main() {
 
   console.log('✅ Product certificates created');
 
-  // Seed EPCs
-  await prisma.epc.create({
-    data: {
-      epcCode: 'EPC-001-2024-0001',
-      productId: product1.id,
-      batchName: 'Batch January 2024',
-      batchNumber: 1,
-      status: 'Active',
-    },
-  });
+  // NEW: Seed EPCs with proper format and corp code relations
+  // Format: corpCode(4) + skuCode(8) + date(DDMMYY - 6) + serialNumber(6) = 24 chars
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yy = String(today.getFullYear()).slice(-2);
+  const dateStr = `${dd}${mm}${yy}`;
 
-  await prisma.epc.create({
-    data: {
-      epcCode: 'EPC-002-2024-0001',
-      productId: product2.id,
-      batchName: 'Batch January 2024',
-      batchNumber: 1,
-      status: 'Active',
-    },
-  });
+  const epcStatuses = ['RECEIVED', 'DELIVERED', 'INBOUND', 'GENERATED', 'RECEIVED', 'INBOUND', 'GENERATED', 'DELIVERED', 'GENERATED', 'RECEIVED'];
+  const epcProducts = [product1, product2, product3, product1, product2, product3, product1, product2, product3, product1];
+  const epcCorpCodes = [corpCodeMain, corpCodeMain, corpCodeBranch, corpCodeWarehouse, corpCodeMain, corpCodeBranch, corpCodeWarehouse, corpCodeMain, corpCodeBranch, corpCodeWarehouse];
+  
+  for (let i = 0; i < 10; i++) {
+    const product = epcProducts[i];
+    const corpCode = epcCorpCodes[i];
+    const serialNumber = String(i + 1).padStart(6, '0'); // 000001, 000002, etc.
+    const epcCode = `${corpCode.code}${product.skuCode}${dateStr}${serialNumber}`;
+    
+    await prisma.epc.create({
+      data: {
+        epcCode,
+        productId: product.id,
+        corpCodeId: corpCode.id,
+        batchName: `Batch ${String(Math.floor(i / 3) + 1).padStart(2, '0')} 2024`,
+        batchNumber: (i % 3) + 1, // 1, 2, 3, 1, 2, 3, ...
+        status: epcStatuses[i] as any,
+      },
+    });
+  }
 
-  console.log('✅ EPCs created');
+  console.log('✅ EPCs created (10 records with proper format and corp codes)');
 
   // Seed Receivings
   const receiving1 = await prisma.receiving.create({
@@ -529,6 +563,7 @@ async function main() {
       orderId: purchaseOrder.id,
       productId: product1.id,
       quantity: 10000,
+      status: 'Pending',
     },
   });
 
@@ -537,6 +572,7 @@ async function main() {
       orderId: deliveryOrder1.id,
       productId: product1.id,
       quantity: 500,
+      status: 'Allocated',
     },
   });
 
@@ -545,6 +581,7 @@ async function main() {
       orderId: deliveryOrder1.id,
       productId: product2.id,
       quantity: 200,
+      status: 'Allocated',
     },
   });
 
@@ -553,6 +590,7 @@ async function main() {
       orderId: deliveryOrder2.id,
       productId: product3.id,
       quantity: 50,
+      status: 'Shipped',
     },
   });
 
@@ -630,16 +668,29 @@ async function main() {
   console.log('   - 2 Suppliers');
   console.log('   - 2 Customers');
   console.log('   - 3 Categories');
-  console.log('   - 3 Products');
+  console.log('   - 3 Corp Codes (AA00, BB01, CC02)');
+  console.log('   - 3 Products (with 8-hex SKU codes)');
+  console.log('   - 10 EPCs (format: corpCode+skuCode+date+serial, mixed statuses)');
   console.log('   - 2 Receivings');
+  console.log('   - 3 Receiving Items');
   console.log('   - 3 Orders (1 PO, 2 DO)');
+  console.log('   - 4 Order Items');
   console.log('   - 3 Inventory records');
   console.log('   - 2 Shipments');
+  console.log('   - 2 Audit Logs');
   console.log('');
   console.log('🔑 Login credentials:');
   console.log('   Admin: admin@warehouse.com / password123');
   console.log('   Manager: manager@warehouse.com / password123');
   console.log('   Operator: operator@warehouse.com / password123');
+  console.log('');
+  console.log('📦 Sample EPC Format:');
+  console.log(`   Example: AA00${product1.skuCode}${dateStr}000001`);
+  console.log('   - Corp Code: AA00 (4 chars)');
+  console.log('   - SKU Code: 12345678 (8 chars)');
+  console.log(`   - Date: ${dateStr} (DDMMYY - 6 chars)`);
+  console.log('   - Serial: 000001 (6 chars)');
+  console.log('   Total: 24 characters');
 }
 
 main()

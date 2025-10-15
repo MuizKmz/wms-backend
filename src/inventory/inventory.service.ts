@@ -22,7 +22,13 @@ export class InventoryService {
     return await this.prisma.inventory.findMany({
       where: Object.keys(where).length ? where : undefined,
       include: {
-        product: { include: { category: true } },
+        product: {
+          include: {
+            supplier: true,
+            category: true,
+            epcs:true,
+          }
+        },
         warehouse: true,
         rack: true,
         section: true,

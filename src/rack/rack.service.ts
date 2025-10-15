@@ -14,7 +14,11 @@ export class RackService {
       include: {
         warehouse: true,
         sections: true,
-        inventory: true,
+        inventory:{
+          include:{
+            product:true
+          },
+        },
       },
     });
   }

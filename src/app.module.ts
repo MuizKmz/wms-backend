@@ -8,6 +8,12 @@ import { InventoryModule } from './inventory/inventory.module';
 import { RackModule } from './rack/rack.module';
 import { SectionModule } from './section/section.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
+import { ReceivingModule } from './receiving/receiving.module';
+import { ShipmentModule } from './shipping/shipping.module';
+import { OrderModule } from './order/order.module';
+import { CustomerModule } from './customer/customer.module';
+import { EpcModule } from './epc/epc.module';
+import { CorpCodeModule } from './corpcode/corpcode.module';
 // import { MachineModule } from './machines/machine.module';
 // import { ToolModule } from './tools/tool.module';
 // import { MouldModule } from './moulds/mould.module';
@@ -22,6 +28,12 @@ import { WarehouseModule } from './warehouse/warehouse.module';
     WarehouseModule,
     RackModule,
     SectionModule,
+    ReceivingModule,
+    ShipmentModule,
+    OrderModule,
+    CustomerModule,
+    EpcModule,
+    CorpCodeModule,
   ],
   providers: [PrismaService],
 })
